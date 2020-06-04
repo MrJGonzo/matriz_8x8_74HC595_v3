@@ -1,3 +1,8 @@
+/* version 3.2 del tablero de LEDS 8x8 que incorpora 2 circuitos de desplazamiento de registro 74HC595
+*  @autor: Jose Antonio Gonzales
+*  @date: 3 junio 2020
+*/
+
 #include <Arduino.h>
 //Asignacion de pines del 74HC595 que controla las filas
 const int rowData  = 2;
