@@ -56,8 +56,8 @@ byte scanTestCol[colSize] = {    B01111111,
 
 
 //Arreglo para filas y columnas
-byte dataRow;
-byte dataCol;
+byte dataRow = B00000000;
+byte dataCol = B00000000;
 
 #define t 100
 
@@ -372,8 +372,29 @@ void readState(){
 }
 */
 
-//funcion para probar el recorrido de filas y columnas por medio de ciclos
+/*funcion para probar el recorrido de filas y columnas por medio de ciclos
+* reemplaza a la funcion scanMatrix
+*/
 void scanArray(){
+
+   for(int i = 0; i< rowSize; i++){
+
+      dataRow = scanTestRow[i];
+      writeRow(dataRow);
+      dataCol = scanTestCol[i];
+      writeCol(dataCol);
+      delay(t);
+
+      for(int j = 0; j<colSize; j++){
+
+         dataRow = scanTestRow[i];
+         writeRow(dataRow);
+         dataCol = scanTestCol[j];
+         writeCol(dataCol);
+         delay(t);
+
+      }
+   }
 
 }
 
@@ -427,6 +448,5 @@ void setup(){
 
 //Funcion ciclica de arduino
 void loop(){
-
-   
+   scanArray();   
 }
