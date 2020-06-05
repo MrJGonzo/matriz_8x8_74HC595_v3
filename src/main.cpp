@@ -2,27 +2,43 @@
 *  @autor: Jose Antonio Gonzales
 *  @date: 3 junio 2020
 */
-
+/*
+******************************************** Librerias ********************************************
+*/
 #include <Arduino.h>
-//Asignacion de pines del 74HC595 que controla las filas
-const int rowData  = 2;
-const int rowLatch = 3;
-const int rowClock = 4;
 
-//Asignacion de pines del 74HC595 que controla las columnas
-const int colData  = 5;
-const int colLatch = 6;
-const int colClock = 7;
+/*
+******************************************** Variables y constantes ********************************************
+*/
 
-//Tamano matriz
-const byte rowSize = 8;
-const byte colSize = 8;
+//Asignacion de pines del 74HC595 que controla la salida de las filas
+const int outRowData  = 2;
+const int outRowLatch = 3;
+const int outRowClock = 4;
+
+//Asignacion de pines del 74HC595 que controla la salida de las columnas
+const int outColData  = 5;
+const int outColLatch = 6;
+const int outColClock = 7;
+
+//Asignacion de pines del 74HC595 que controla la entrada de las filas
+const int inRowData  = 8;
+const int inRowLatch = 9;
+const int inRowClock = 10;
+
+//Asignacion de pines del 74HC595 que controla la entrada de las columnas
+const int inColData  = 11;
+const int inColLatch = 12;
+const int inColClock = 13;
+
+//dimension matriz
+const byte sideSize = 8;
 const byte matrixArea = 64;
 
-/*pin de lectura para switch
+//pines de lectura para lectura
 const int readA = 10;
 const int readB = 11;
-*/
+
 const int readPinA = 13;
 const int readPinB = 12;
 
@@ -39,57 +55,96 @@ byte data = B00000000;
 /*matriz de prueba escaneo completo 8x8, se implementan 2 arreglos separados uno para las filas y otro para las columnas
 * los valores de bits de fila-columna para un pixel cualquiera son opuestos.
 */
-byte scanTestRow[rowSize] = {    B10000000,
-                                 B01000000,
-                                 B00100000,
-                                 B00010000,
-                                 B00001000,
-                                 B00000100,
-                                 B00000010,
-                                 B00000001
-                                 }; 
+byte bitAssignedRow[sideSize] = {   B10000000,
+                                    B01000000,
+                                    B00100000,
+                                    B00010000,
+                                    B00001000,
+                                    B00000100,
+                                    B00000010,
+                                    B00000001   }; 
 
-byte scanTestCol[colSize] = {    B01111111,
-                                 B10111111,
-                                 B11011111,
-                                 B11101111,
-                                 B11110111,
-                                 B11111011,
-                                 B11111101,
-                                 B11111110
-                                 }; 
+byte bitAssignedCol[sideSize] = {   B01111111,
+                                    B10111111,
+                                    B11011111,
+                                    B11101111,
+                                    B11110111,
+                                    B11111011,
+                                    B11111101,
+                                    B11111110   }; 
 
-
-//Arreglo para filas y columnas
+//variables para asignar el valor del bit a un pixel en el arreglo de bits de filas y columnas
 byte dataRow = B00000000;
 byte dataCol = B00000000;
 
+//Arreglos para almacenamiento de los estados de lectura de los pixels de la matriz
+byte bitStateRow[sideSize] = {   B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000   };
+
+byte bitStateCol[sideSize] = {   B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000,
+                                 B00000000   };
+
+//variables para asignar la lectura de un pixel en el arreglo de bits de filas y columnas
+byte stateRow = 0;
+byte stateCol = 0;
+
 #define t 100
+
+/*
+******************************************** Funciones ********************************************
+*/
 
 //Funcion de inicializacion del IC 74HC595 usado para las filas
 void writeRow(byte blankData){
   
-   shiftOut(rowData, rowClock, LSBFIRST, blankData);
-   digitalWrite(rowLatch, HIGH);
-   digitalWrite(rowLatch, LOW);
+   shiftOut(outRowData, outRowClock, LSBFIRST, blankData);
+   digitalWrite(outRowLatch, HIGH);
+   digitalWrite(outRowLatch, LOW);
    
 }
 
 //Funcion de inicializacion del IC 74HC595 usado para las columnas
 void writeCol(int blankData){
   
-   shiftOut(colData, colClock, LSBFIRST, blankData);
-   digitalWrite(colLatch, LOW);
-   digitalWrite(colLatch, HIGH);
+   shiftOut(outColData, outColClock, LSBFIRST, blankData);
+   digitalWrite(outColLatch, LOW);
+   digitalWrite(outColLatch, HIGH);
+  
+}
+
+//Funcion de inicializacion del IC 74HC595 usado para lectura del estado por filas
+void readRow(){
+   
+   shiftIn(inRowData, inRowClock, LSBFIRST);
+   stateRow = digitalRead(inRowLatch);
+
+}
+
+//Funcion de inicializacion del IC 74HC595 usado para lectura del estado por columnas
+void readCol(){
+  
+   shiftIn(inColData, inColClock, LSBFIRST);
+   stateCol = digitalRead(inColLatch);
   
 }
 
 /*
-
 funcion para probar todos los leds de la matrix, establece los valores de las filas en 1 y de cada una de las columnas en 0, de este modo la dupla fila 1,columna 0 enciende cada fila.
 Si por ejemplo se cambia el valor de la n-fila a 0 y se mantiene todos los valores de la columna en 0 se apagara la n-fila colocada en 0 esto es:
 
-   writeRow(B01111111);
+   writeRow(B011111Test11);
    writeCol(B00000000);
 
    Resultado en la matriz de leds
@@ -140,12 +195,114 @@ void turnOnFullMatrix(){
 
 //funcion para apagar todos los leds de la matriz, establece todas las filas y columnas en bits de valor 0
 void turnOffFullMatrix(){
-  
   // Se borra todo el tablero 8x8
    writeRow(B00000000);
    writeCol(B00000000);
    delay(1000);
+}
+
+/*funcion scanArray implementada para probar el recorrido de filas y columnas por medio de ciclos
+* reemplaza a la funcion scanMatrix
+*/
+void writeMatrixState(){
+
+   for(int i = 0; i< sideSize; i++){
+
+      dataRow = bitAssignedRow[i];
+      writeRow(dataRow);
+      dataCol = bitAssignedCol[i];
+      writeCol(dataCol);
+      delay(t);
+
+      for(int j = 0; j<sideSize; j++){
+
+         dataRow = bitAssignedRow[i];
+         writeRow(dataRow);
+         dataCol = bitAssignedCol[j];
+         writeCol(dataCol);
+         delay(t);
+
+      }
+   }
+
+}
+
+void readMatrixState(){
+
+   for (int i = 0; i<sideSize; i++){
+      stateRow = bitStateRow[i];
+      readRow();
+      stateCol = bitStateCol[i];
+      readCol();
+      delay(t);
+
+   }
+
+};
+
+//Funcion para determinar visualmente cual es la coordenada (0,0) del tablero de lEDS
+void cornerTest(){
   
+   int readA = 0;
+   int readB = 0;
+
+  //identifica el primer led prendiendo mas tiempo
+   writeRow(B10000000);
+   writeCol(B01111111);
+   delay(t);
+   /*writeRow(B00000001);
+   writeCol(B11111110);
+   delay(300);
+   */
+   readA = digitalRead(readPinA);
+   Serial.println("---");
+   Serial.print("A"); 
+   Serial.print(readA);
+   Serial.println("***");
+   readB = digitalRead(readPinB);
+   Serial.print("B");
+   Serial.print(readB);
+   Serial.println("***");
+}
+
+/*
+******************************************** Funciones ejecucion de Arduino ********************************************
+*/
+
+//funcion setup arduino se ejecuta al inicio una vez
+void setup(){
+  
+  Serial.begin(9600);
+  Serial.print("inicia lectura");
+  //Asignacion puertos IC 74HC595 como salida para el control de escritura por filas de los valores de cada pixel
+   pinMode(outRowData, OUTPUT);
+   pinMode(outRowLatch, OUTPUT);
+   pinMode(outRowClock, OUTPUT);
+  //Asignacion puertos IC 74HC595 como salida para el control de escritura por columnas de los valores de cada pixel
+   pinMode(outColData, OUTPUT);
+   pinMode(outColLatch, OUTPUT);
+   pinMode(outColClock, OUTPUT);
+  //Asignacion puertos IC 74HC595 como entrada para el control de lectura por filas del estado de los pixels
+   pinMode(inRowData, INPUT);
+   pinMode(inRowLatch, INPUT);
+   pinMode(inRowClock, INPUT);
+  //Asignacion puertos IC 74HC595 como entrada para el control de lectura por columnas del estado de los pixels
+   pinMode(inColData, INPUT);
+   pinMode(inColLatch, INPUT);
+   pinMode(inColClock, INPUT);
+   //Prueba de tablero
+   turnOnFullMatrix();
+   delay(t*10);
+   turnOffFullMatrix();
+   delay(t*10);
+  
+}
+
+//Funcion ciclica de arduino
+void loop(){
+   cornerTest();
+   delay(t);
+   writeMatrixState();   
 }
 
 //funcion que realiza el recorrido de todos los pixels de la matriz
@@ -351,107 +508,4 @@ void scanMatrix(){
    writeCol(B11111110);
    delay(t);            
 
-}
-
-/*
-void readState(){
-
-
-   Serial.println("entra caso 1");
-   if (readA == 0 && readB == 0){
-      Serial.print("0,0:");
-   }
-   Serial.println("entra caso 2");
-   if (readA == 0 && readB == 1){
-      Serial.print("0,1:");
-   }
-   Serial.println("entra caso 3");
-   if (readA == 1 && readB == 0){
-      Serial.print("1,0:"); 
-   }
-   Serial.println("entra caso 4");
-   if (readA == 1 && readB == 1){
-      Serial.print("0,0:");
-   }
-   
-}
-*/
-
-/*funcion para probar el recorrido de filas y columnas por medio de ciclos
-* reemplaza a la funcion scanMatrix
-*/
-void scanArray(){
-
-   for(int i = 0; i< rowSize; i++){
-
-      dataRow = scanTestRow[i];
-      writeRow(dataRow);
-      dataCol = scanTestCol[i];
-      writeCol(dataCol);
-      delay(t);
-
-      for(int j = 0; j<colSize; j++){
-
-         dataRow = scanTestRow[i];
-         writeRow(dataRow);
-         dataCol = scanTestCol[j];
-         writeCol(dataCol);
-         delay(t);
-
-      }
-   }
-
-}
-
-//Funcion para determinar visualmente cual es la coordenada (0,0) del tablero de lEDS
-void cornerTest(){
-  
-   int readA = 0;
-   int readB = 0;
-
-  //identifica el primer led prendiendo mas tiempo
-   writeRow(B00000001);
-   writeCol(B01111111);
-   delay(t);
-   /*writeRow(B00000001);
-   writeCol(B11111110);
-   delay(300);
-   */
-   readA = digitalRead(readPinA);
-   Serial.println("---");
-   Serial.print("A"); 
-   Serial.print(readA);
-   Serial.println("***");
-   readB = digitalRead(readPinB);
-   Serial.print("B");
-   Serial.print(readB);
-   Serial.println("***");
-}
-
-//funcion setup arduino se ejecuta al inicio una vez
-void setup(){
-  
-  Serial.begin(9600);
-  Serial.print("inicia lectura");
-  //Asignacion puertos IC 74HC595 como salida para el control de filas
-   pinMode(rowData, OUTPUT);
-   pinMode(rowLatch, OUTPUT);
-   pinMode(rowClock, OUTPUT);
-  //Asignacion puertos IC 74HC595 como salida para el control de columnas
-   pinMode(colData, OUTPUT);
-   pinMode(colLatch, OUTPUT);
-   pinMode(colClock, OUTPUT);
-   // Asignacion de los puertos para lectura del estado del led
-   pinMode(readPinA, INPUT);
-   pinMode(readPinB, INPUT);
-   //Prueba de tablero
-   turnOnFullMatrix();
-   delay(t*10);
-   turnOffFullMatrix();
-  
-}
-
-//Funcion ciclica de arduino
-void loop(){
-   scanArray();   
 }
