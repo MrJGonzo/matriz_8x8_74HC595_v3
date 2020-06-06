@@ -204,30 +204,27 @@ void turnOffFullMatrix(){
 /*funcion scanArray implementada para probar el recorrido de filas y columnas por medio de ciclos
 * reemplaza a la funcion scanMatrix
 */
-void writeMatrixState(){
+void writeState(){
 
    for(int i = 0; i< sideSize; i++){
 
       dataRow = bitAssignedRow[i];
       writeRow(dataRow);
-      dataCol = bitAssignedCol[i];
-      writeCol(dataCol);
-      delay(t);
+
 
       for(int j = 0; j<sideSize; j++){
 
-         dataRow = bitAssignedRow[i];
-         writeRow(dataRow);
          dataCol = bitAssignedCol[j];
          writeCol(dataCol);
          delay(t);
 
       }
+      
    }
 
 }
 
-void readMatrixState(){
+void readState(){
 
    for (int i = 0; i<sideSize; i++){
       stateRow = bitStateRow[i];
@@ -300,9 +297,8 @@ void setup(){
 
 //Funcion ciclica de arduino
 void loop(){
-   cornerTest();
-   delay(t);
-   writeMatrixState();   
+
+   writeState();   
 }
 
 //funcion que realiza el recorrido de todos los pixels de la matriz
