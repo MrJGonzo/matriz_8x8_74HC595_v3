@@ -100,7 +100,7 @@ byte bitStateCol[sideSize] = {   B00000000,
 byte stateRow = 0;
 byte stateCol = 0;
 
-#define t 100
+#define t 300
 
 /*
 ******************************************** Funciones ********************************************
@@ -211,7 +211,6 @@ void writeState(){
       dataRow = bitAssignedRow[i];
       writeRow(dataRow);
 
-
       for(int j = 0; j<sideSize; j++){
 
          dataCol = bitAssignedCol[j];
@@ -219,7 +218,7 @@ void writeState(){
          delay(t);
 
       }
-      
+   
    }
 
 }
@@ -298,7 +297,8 @@ void setup(){
 //Funcion ciclica de arduino
 void loop(){
 
-   writeState();   
+   writeState();
+    
 }
 
 //funcion que realiza el recorrido de todos los pixels de la matriz
