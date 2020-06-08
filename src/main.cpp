@@ -1,3 +1,4 @@
+
 /* version 3.2 del tablero de LEDS 8x8 que incorpora 2 circuitos de desplazamiento de registro 74HC595
 *  @autor: Jose Antonio Gonzales
 *  @date: 3 junio 2020
@@ -14,34 +15,35 @@
 */
 
 //Asignacion de pines del 74HC595 que controla la salida de las filas
-const byte outRowData  = 2;
-const byte outRowLatch = 3;
-const byte outRowClock = 4;
+const int outRowData  = 2;
+const int outRowLatch = 3;
+const int outRowClock = 4;
 
 //Asignacion de pines del 74HC595 que controla la salida de las columnas
-const byte outColData  = 5;
-const byte outColLatch = 6;
-const byte outColClock = 7;
+const int outColData  = 5;
+const int outColLatch = 6;
+const int outColClock = 7;
 
 //Asignacion de pines del 74HC595 que controla la entrada de las filas
-const byte inRowData  = 8;
-const byte inRowLatch = 9;
-const byte inRowClock = 10;
+const int inRowData  = 8;
+const int inRowLatch = 9;
+const int inRowClock = 10;
 
 //Asignacion de pines del 74HC595 que controla la entrada de las columnas
-const byte inColData  = 11;
-const byte inColLatch = 12;
-const byte inColClock = 13;
+const int inColData  = 11;
+const int inColLatch = 12;
+const int inColClock = 13;
 
 //dimension matriz
 const byte sideSize = 8;
 const byte matrixArea = 64;
 
 //pines de lectura para lectura
+const int readA = 10;
+const int readB = 11;
 
-const byte readPinA = 48;
-const byte readPinB = 50;
-const byte readPicC = 52;
+const int readPinA = 13;
+const int readPinB = 12;
 
 /*
 byte rowData [rowSize] = {};
@@ -56,7 +58,7 @@ byte data = B00000000;
 /*matriz de prueba escaneo completo 8x8, se implementan 2 arreglos separados uno para las filas y otro para las columnas
 * los valores de bits de fila-columna para un pixel cualquiera son opuestos.
 */
-byte bitAssignedRow[sideSize] = {   B11111111,
+byte bitAssignedRow[sideSize] = {   B10000000,
                                     B01000000,
                                     B00100000,
                                     B00010000,
@@ -65,7 +67,7 @@ byte bitAssignedRow[sideSize] = {   B11111111,
                                     B00000010,
                                     B00000001   }; 
 
-byte bitAssignedCol[sideSize] = {   B00000000,
+byte bitAssignedCol[sideSize] = {   B01111111,
                                     B10111111,
                                     B11011111,
                                     B11101111,
@@ -73,18 +75,6 @@ byte bitAssignedCol[sideSize] = {   B00000000,
                                     B11111011,
                                     B11111101,
                                     B11111110   }; 
-
-byte pA[4] = {                      B10000000,
-                                    B01000000,
-                                    B00100000
-
-                                    
-                                     };
-
-byte pB[4] = {                      B01111111,
-                                    B10111111,
-                                    B11011111
-                                   };                               
 
 //variables para asignar el valor del bit a un pixel en el arreglo de bits de filas y columnas
 byte dataRow = B00000000;
@@ -113,7 +103,7 @@ byte bitStateCol[sideSize] = {   B00000000,
 byte stateRow = 0;
 byte stateCol = 0;
 
-#define t 100
+#define t 300
 
 /*
 ******************************************** Funciones ********************************************
@@ -123,7 +113,7 @@ byte stateCol = 0;
 void writeRow(byte blankData){
   
    shiftOut(outRowData, outRowClock, LSBFIRST, blankData);
-   digitalWrite(outRowLatch, LOW);
+   digitalWrite(outRowLatch, HIGH);
    digitalWrite(outRowLatch, LOW);
    
 }
@@ -132,8 +122,8 @@ void writeRow(byte blankData){
 void writeCol(int blankData){
   
    shiftOut(outColData, outColClock, LSBFIRST, blankData);
-   digitalWrite(outColLatch, HIGH);
    digitalWrite(outColLatch, LOW);
+   digitalWrite(outColLatch, HIGH);
   
 }
 
@@ -148,28 +138,17 @@ void readRow(){
 //Funcion de inicializacion del IC 74HC595 usado para lectura del estado por columnas
 void readCol(){
   
-   byte a = 0;
-   byte b = 0;
-   byte c = 0;
-
-   a = digitalRead(readPinA);
-   Serial.print(a);
-   b = digitalRead(readPinB);
-   Serial.print(b);
-   c = digitalRead(readPicC);
-   Serial.print(c);
+   shiftIn(inColData, inColClock, LSBFIRST);
+   stateCol = digitalRead(inColLatch);
   
 }
 
 /*
 funcion para probar todos los leds de la matrix, establece los valores de las filas en 1 y de cada una de las columnas en 0, de este modo la dupla fila 1,columna 0 enciende cada fila.
 Si por ejemplo se cambia el valor de la n-fila a 0 y se mantiene todos los valores de la columna en 0 se apagara la n-fila colocada en 0 esto es:
-
    writeRow(B011111Test11);
    writeCol(B00000000);
-
    Resultado en la matriz de leds
-
       C1  C2  C3  C4  C5  C6  C7  C8
     F1 0   0   0   0   0   0   0   0
     F2 1   1   1   1   1   1   1   1
@@ -179,14 +158,10 @@ Si por ejemplo se cambia el valor de la n-fila a 0 y se mantiene todos los valor
     F6 1   1   1   1   1   1   1   1
     F7 1   1   1   1   1   1   1   1
     F8 1   1   1   1   1   1   1   1
-
   La configuracion "opuesta" es decir, todas las filas en 1 y la primera columna en 1 resultara:
-
    writeRow(B11111111);
    writeCol(B10000000);
-
    Resultado en la matriz de leds
-
       C1  C2  C3  C4  C5  C6  C7  C8
     F1 0   1   1   1   1   1   1   1
     F2 0   1   1   1   1   1   1   1
@@ -196,9 +171,7 @@ Si por ejemplo se cambia el valor de la n-fila a 0 y se mantiene todos los valor
     F6 0   1   1   1   1   1   1   1
     F7 0   1   1   1   1   1   1   1
     F8 0   1   1   1   1   1   1   1
-
   De este modo hemos establecido cual es la fila y columna 1 respecto de la matriz de LEDS.
-
   Es importante tener en cuenta que esta configuracion depende de los valores que determinenos para la combinacion de la dupla de paramtros LSBFIRST/MSBFIRST, MSBFIRST/LSBFIRST, MSBFIRST/MSBFIRST, LSBFIRST/LSBFIRST
    sobre las funciones writeRow/writeCol determinara el orden de punto de coordenadas (0,0) para la orientacion de tablero en particular.
 */
@@ -229,12 +202,12 @@ void writeState(){
 
    for(int i = 0; i< sideSize; i++){
 
-      dataRow = bitAssignedCol[i];
+      dataRow = bitAssignedRow[i];
       writeRow(dataRow);
 
       for(int j = 0; j<sideSize; j++){
 
-         dataCol = bitAssignedRow[j];
+         dataCol = bitAssignedCol[j];
          writeCol(dataCol);
          delay(t);
 
@@ -318,13 +291,8 @@ void setup(){
 //Funcion ciclica de arduino
 void loop(){
 
-  writeRow(B00000000);
-  writeCol(B00000000);
-  delay(t);
-  writeRow(B11111111);
-  writeCol(B00010000);
-  delay(t);
-
+   writeState();
+    
 }
 
 //funcion que realiza el recorrido de todos los pixels de la matriz
