@@ -14,35 +14,34 @@
 */
 
 //Asignacion de pines del 74HC595 que controla la salida de las filas
-const int outRowData  = 2;
-const int outRowLatch = 3;
-const int outRowClock = 4;
+const byte outRowData  = 2;
+const byte outRowLatch = 3;
+const byte outRowClock = 4;
 
 //Asignacion de pines del 74HC595 que controla la salida de las columnas
-const int outColData  = 5;
-const int outColLatch = 6;
-const int outColClock = 7;
+const byte outColData  = 5;
+const byte outColLatch = 6;
+const byte outColClock = 7;
 
 //Asignacion de pines del 74HC595 que controla la entrada de las filas
-const int inRowData  = 8;
-const int inRowLatch = 9;
-const int inRowClock = 10;
+const byte inRowData  = 8;
+const byte inRowLatch = 9;
+const byte inRowClock = 10;
 
 //Asignacion de pines del 74HC595 que controla la entrada de las columnas
-const int inColData  = 11;
-const int inColLatch = 12;
-const int inColClock = 13;
+const byte inColData  = 11;
+const byte inColLatch = 12;
+const byte inColClock = 13;
 
 //dimension matriz
 const byte sideSize = 8;
 const byte matrixArea = 64;
 
 //pines de lectura para lectura
-const int readA = 10;
-const int readB = 11;
 
-const int readPinA = 13;
-const int readPinB = 12;
+const byte readPinA = 48;
+const byte readPinB = 50;
+const byte readPicC = 52;
 
 /*
 byte rowData [rowSize] = {};
@@ -57,7 +56,7 @@ byte data = B00000000;
 /*matriz de prueba escaneo completo 8x8, se implementan 2 arreglos separados uno para las filas y otro para las columnas
 * los valores de bits de fila-columna para un pixel cualquiera son opuestos.
 */
-byte bitAssignedRow[sideSize] = {   B10000000,
+byte bitAssignedRow[sideSize] = {   B11111111,
                                     B01000000,
                                     B00100000,
                                     B00010000,
@@ -66,7 +65,7 @@ byte bitAssignedRow[sideSize] = {   B10000000,
                                     B00000010,
                                     B00000001   }; 
 
-byte bitAssignedCol[sideSize] = {   B01111111,
+byte bitAssignedCol[sideSize] = {   B00000000,
                                     B10111111,
                                     B11011111,
                                     B11101111,
@@ -74,6 +73,18 @@ byte bitAssignedCol[sideSize] = {   B01111111,
                                     B11111011,
                                     B11111101,
                                     B11111110   }; 
+
+byte pA[4] = {                      B10000000,
+                                    B01000000,
+                                    B00100000
+
+                                    
+                                     };
+
+byte pB[4] = {                      B01111111,
+                                    B10111111,
+                                    B11011111
+                                   };                               
 
 //variables para asignar el valor del bit a un pixel en el arreglo de bits de filas y columnas
 byte dataRow = B00000000;
@@ -102,7 +113,7 @@ byte bitStateCol[sideSize] = {   B00000000,
 byte stateRow = 0;
 byte stateCol = 0;
 
-#define t 300
+#define t 100
 
 /*
 ******************************************** Funciones ********************************************
@@ -112,7 +123,7 @@ byte stateCol = 0;
 void writeRow(byte blankData){
   
    shiftOut(outRowData, outRowClock, LSBFIRST, blankData);
-   digitalWrite(outRowLatch, HIGH);
+   digitalWrite(outRowLatch, LOW);
    digitalWrite(outRowLatch, LOW);
    
 }
@@ -121,8 +132,8 @@ void writeRow(byte blankData){
 void writeCol(int blankData){
   
    shiftOut(outColData, outColClock, LSBFIRST, blankData);
-   digitalWrite(outColLatch, LOW);
    digitalWrite(outColLatch, HIGH);
+   digitalWrite(outColLatch, LOW);
   
 }
 
@@ -137,8 +148,16 @@ void readRow(){
 //Funcion de inicializacion del IC 74HC595 usado para lectura del estado por columnas
 void readCol(){
   
-   shiftIn(inColData, inColClock, LSBFIRST);
-   stateCol = digitalRead(inColLatch);
+   byte a = 0;
+   byte b = 0;
+   byte c = 0;
+
+   a = digitalRead(readPinA);
+   Serial.print(a);
+   b = digitalRead(readPinB);
+   Serial.print(b);
+   c = digitalRead(readPicC);
+   Serial.print(c);
   
 }
 
@@ -210,12 +229,12 @@ void writeState(){
 
    for(int i = 0; i< sideSize; i++){
 
-      dataRow = bitAssignedRow[i];
+      dataRow = bitAssignedCol[i];
       writeRow(dataRow);
 
       for(int j = 0; j<sideSize; j++){
 
-         dataCol = bitAssignedCol[j];
+         dataCol = bitAssignedRow[j];
          writeCol(dataCol);
          delay(t);
 
@@ -299,8 +318,13 @@ void setup(){
 //Funcion ciclica de arduino
 void loop(){
 
-   writeState();
-    
+  writeRow(B00000000);
+  writeCol(B00000000);
+  delay(t);
+  writeRow(B11111111);
+  writeCol(B00010000);
+  delay(t);
+
 }
 
 //funcion que realiza el recorrido de todos los pixels de la matriz
