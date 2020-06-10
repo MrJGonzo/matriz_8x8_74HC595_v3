@@ -10,6 +10,7 @@
 
 #include <Arduino.h>
 
+
 /*
 ******************************************** Variables y constantes ********************************************
 */
@@ -39,17 +40,17 @@ const byte sideSize = 8;
 const byte matrixArea = 64;
 
 //pines de lectura para lectura
-const int readA = 10;
-const int readB = 11;
 
-const int readPinA = 13;
-const int readPinB = 12;
+const byte readPins [8] = {30,31,32,33,34,35,36,37};
+
+byte dataState [2] = {1,1};
 
 /*
 byte rowData [rowSize] = {};
 byte colData [colSize] = {};
 */
 byte switchState = B00000000;
+
 
 //variables genericas
 byte blankData = B00000000;
@@ -103,7 +104,7 @@ byte bitStateCol[sideSize] = {   B00000000,
 byte stateRow = 0;
 byte stateCol = 0;
 
-#define t 300
+#define t 1
 
 /*
 ******************************************** Funciones ********************************************
@@ -198,9 +199,21 @@ void turnOffFullMatrix(){
 /*funcion scanArray implementada para probar el recorrido de filas y columnas por medio de ciclos
 * reemplaza a la funcion scanMatrix
 */
+void readState(){
+
+   byte tempState = 1;
+   for(int thisPin = 30; thisPin<38; thisPin++){
+      tempState = digitalRead(thisPin);
+      Serial.print(tempState);
+   }
+
+   Serial.println("");
+
+}
+
 void writeState(){
 
-   for(int i = 0; i< sideSize; i++){
+   for(int i = 7; i< sideSize; i++){
 
       dataRow = bitAssignedRow[i];
       writeRow(dataRow);
@@ -209,51 +222,17 @@ void writeState(){
 
          dataCol = bitAssignedCol[j];
          writeCol(dataCol);
+         readState();
          delay(t);
 
       }
+
+      Serial.println("");
    
    }
 
 }
 
-void readState(){
-
-   for (int i = 0; i<sideSize; i++){
-      stateRow = bitStateRow[i];
-      readRow();
-      stateCol = bitStateCol[i];
-      readCol();
-      delay(t);
-
-   }
-
-};
-
-//Funcion para determinar visualmente cual es la coordenada (0,0) del tablero de lEDS
-void cornerTest(){
-  
-   int readA = 0;
-   int readB = 0;
-
-  //identifica el primer led prendiendo mas tiempo
-   writeRow(B10000000);
-   writeCol(B01111111);
-   delay(t);
-   /*writeRow(B00000001);
-   writeCol(B11111110);
-   delay(300);
-   */
-   readA = digitalRead(readPinA);
-   Serial.println("---");
-   Serial.print("A"); 
-   Serial.print(readA);
-   Serial.println("***");
-   readB = digitalRead(readPinB);
-   Serial.print("B");
-   Serial.print(readB);
-   Serial.println("***");
-}
 
 /*
 ******************************************** Funciones ejecucion de Arduino ********************************************
@@ -280,6 +259,13 @@ void setup(){
    pinMode(inColData, INPUT);
    pinMode(inColLatch, INPUT);
    pinMode(inColClock, INPUT);
+
+   //Asignacion de puertos de lectura para prueba
+   for(byte readPin = 30; readPin < 38; readPin++){
+      pinMode(readPin, INPUT);
+
+   }
+
    //Prueba de tablero
    turnOnFullMatrix();
    delay(t*10);
@@ -291,211 +277,8 @@ void setup(){
 //Funcion ciclica de arduino
 void loop(){
 
-   writeState();
+      writeState();
     
 }
 
 //funcion que realiza el recorrido de todos los pixels de la matriz
-void scanMatrix(){
-   //escaneo de la primera fila
-   writeRow(B10000000);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B10000000);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B10000000);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B10000000);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B10000000);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B10000000);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B10000000);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B10000000);
-   writeCol(B11111110);
-   delay(t);
-   //escaneo de la segunda fila
-   writeRow(B01000000);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B01000000);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B01000000);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B01000000);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B01000000);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B01000000);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B01000000);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B01000000);
-   writeCol(B11111110);
-   delay(t);  
-   //escaneo de la tercera fila
-   writeRow(B00100000);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B00100000);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B00100000);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B00100000);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B00100000);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B00100000);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B00100000);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B00100000);
-   writeCol(B11111110);
-   delay(t);
-   //escaneo de la cuarta fila
-   writeRow(B00010000);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B00010000);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B00010000);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B00010000);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B00010000);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B00010000);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B00010000);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B00010000);
-   writeCol(B11111110);
-   delay(t);   
-   //escaneo de la quinta fila
-   writeRow(B00001000);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B00001000);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B00001000);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B00001000);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B00001000);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B00001000);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B00001000);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B00001000);
-   writeCol(B11111110);
-   delay(t);   
-   //escaneo de la sexta fila
-   writeRow(B00000100);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B00000100);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B00000100);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B00000100);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B00000100);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B00000100);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B00000100);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B00000100);
-   writeCol(B11111110);
-   delay(t); 
-   //escaneo de la septima fila
-   writeRow(B00000010);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B00000010);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B00000010);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B00000010);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B00000010);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B00000010);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B00000010);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B00000010);
-   writeCol(B11111110);
-   delay(t); 
-   //escaneo de la octava fila
-   writeRow(B00000001);
-   writeCol(B01111111);
-   delay(t);
-   writeRow(B00000001);
-   writeCol(B10111111);
-   delay(t);
-   writeRow(B00000001);
-   writeCol(B11011111);
-   delay(t);
-   writeRow(B00000001);
-   writeCol(B11101111);
-   delay(t);
-   writeRow(B00000001);
-   writeCol(B11110111);
-   delay(t);
-   writeRow(B00000001);
-   writeCol(B11111011);
-   delay(t);   
-   writeRow(B00000001);
-   writeCol(B11111101);
-   delay(t);
-   writeRow(B00000001);
-   writeCol(B11111110);
-   delay(t);            
-
-}
