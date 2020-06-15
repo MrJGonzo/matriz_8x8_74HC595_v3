@@ -12,7 +12,7 @@
 
 
 /*
-******************************************** Variables y constantes ********************************************
+******************************************** Entradas y salidas ********************************************
 */
 
 //Asignacion de pines del 74HC595 que controla la salida de las filas
@@ -25,15 +25,17 @@ const int outColData  = 5;
 const int outColLatch = 6;
 const int outColClock = 7;
 
-//Asignacion de pines del 74HC595 que controla la entrada de las filas
-const int inRowData  = 8;
-const int inRowLatch = 9;
-const int inRowClock = 10;
+//Asignacion de pines del 74LS165 que controla la entrada de las filas
+const int inRowShiftLoad = 31;      //Conecta el pin 31 de Arduino con el pin 1 del 74LS165
+const int inRowClockSignal = 33;    //Conecta el pin 39 de Arduino con el pin 2 del 74LS165
+const int inRowDataSerialInv = 35;      //Conecta el pin 35 de Arduino con el pin 7 del 74LS165, se toma el pin 7 para la salida x y pin 9 para valor complemento de x
+const int inRowClockEnable = 37;    //Conecta el pin 37 de Arduino con el pin 15 del 74LS165
 
 //Asignacion de pines del 74HC595 que controla la entrada de las columnas
-const int inColData  = 11;
-const int inColLatch = 12;
-const int inColClock = 13;
+const int inColShiftLoad = 30;      //Conecta el pin 31 de Arduino con el pin 1 del 74LS165
+const int inColClockSignal = 32;    //Conecta el pin 39 de Arduino con el pin 2 del 74LS165
+const int inColDataSerialInv = 34;      //Conecta el pin 35 de Arduino con el pin 7 del 74LS165, se toma el pin 7 para la salida x y pin 9 para valor complemento de x
+const int inColClockEnable = 36;    //Conecta el pin 37 de Arduino con el pin 15 del 74LS165
 
 //dimension matriz
 const byte sideSize = 8;
@@ -104,7 +106,7 @@ byte bitStateCol[sideSize] = {   B00000000,
 byte stateRow = 0;
 byte stateCol = 0;
 
-#define t 1
+#define t 50000
 
 /*
 ******************************************** Funciones ********************************************
@@ -131,16 +133,32 @@ void writeCol(int blankData){
 //Funcion de inicializacion del IC 74HC595 usado para lectura del estado por filas
 void readRow(){
    
-   shiftIn(inRowData, inRowClock, LSBFIRST);
-   stateRow = digitalRead(inRowLatch);
+   digitalWrite(inRowShiftLoad,LOW);
+   delayMicroseconds(t);
+   digitalWrite(inRowShiftLoad,HIGH);
+   delayMicroseconds(t);
+
+   digitalWrite(inRowClockSignal,HIGH);
+   digitalWrite(inRowClockEnable,LOW);
+   byte incomingRow = shiftIn(inRowDataSerialInv,inRowClockSignal, LSBFIRST);
+   digitalWrite(inRowClockEnable,HIGH);
+   Serial.println(incomingRow, BIN);
 
 }
 
 //Funcion de inicializacion del IC 74HC595 usado para lectura del estado por columnas
 void readCol(){
   
-   shiftIn(inColData, inColClock, LSBFIRST);
-   stateCol = digitalRead(inColLatch);
+   digitalWrite(inColShiftLoad,LOW);
+   delayMicroseconds(t);
+   digitalWrite(inColShiftLoad,HIGH);
+   delayMicroseconds(t);
+
+   digitalWrite(inColClockSignal,HIGH);
+   digitalWrite(inColClockEnable,LOW);
+   byte incomingCol = shiftIn(inColDataSerialInv,inColClockSignal, LSBFIRST);
+   digitalWrite(inColClockEnable,HIGH);
+   Serial.println(incomingCol, BIN);
   
 }
 
@@ -184,7 +202,7 @@ void turnOnFullMatrix(){
 
    writeRow(B11111111);
    writeCol(B00000000);
-   delay(3000);
+   delayMicroseconds(3000);
   
 }
 
@@ -193,7 +211,7 @@ void turnOffFullMatrix(){
   // Se borra todo el tablero 8x8
    writeRow(B00000000);
    writeCol(B00000000);
-   delay(1000);
+   delayMicroseconds(1000);
 }
 
 /*funcion scanArray implementada para probar el recorrido de filas y columnas por medio de ciclos
@@ -223,7 +241,7 @@ void writeState(){
          dataCol = bitAssignedCol[j];
          writeCol(dataCol);
          readState();
-         delay(t);
+         delayMicroseconds(t);
 
       }
 
@@ -251,26 +269,25 @@ void setup(){
    pinMode(outColData, OUTPUT);
    pinMode(outColLatch, OUTPUT);
    pinMode(outColClock, OUTPUT);
+
   //Asignacion puertos IC 74HC595 como entrada para el control de lectura por filas del estado de los pixels
-   pinMode(inRowData, INPUT);
-   pinMode(inRowLatch, INPUT);
-   pinMode(inRowClock, INPUT);
+   pinMode(inRowShiftLoad, OUTPUT);
+   pinMode(inRowClockSignal, OUTPUT);
+   pinMode(inRowClockEnable, OUTPUT);
+   pinMode(inRowDataSerialInv, INPUT);
+
   //Asignacion puertos IC 74HC595 como entrada para el control de lectura por columnas del estado de los pixels
-   pinMode(inColData, INPUT);
-   pinMode(inColLatch, INPUT);
-   pinMode(inColClock, INPUT);
+   pinMode(inColShiftLoad, OUTPUT);
+   pinMode(inColClockSignal, OUTPUT);
+   pinMode(inColClockEnable, OUTPUT);
+   pinMode(inColDataSerialInv, INPUT);
 
-   //Asignacion de puertos de lectura para prueba
-   for(byte readPin = 30; readPin < 38; readPin++){
-      pinMode(readPin, INPUT);
-
-   }
 
    //Prueba de tablero
    turnOnFullMatrix();
-   delay(t*10);
+   delayMicroseconds(t*10);
    turnOffFullMatrix();
-   delay(t*10);
+   delayMicroseconds(t*10);
   
 }
 
@@ -278,6 +295,8 @@ void setup(){
 void loop(){
 
       writeState();
+      readRow();
+      readCol();
     
 }
 
