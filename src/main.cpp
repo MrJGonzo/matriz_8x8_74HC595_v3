@@ -106,7 +106,7 @@ byte bitStateCol[sideSize] = {   B00000000,
 byte stateRow = 0;
 byte stateCol = 0;
 
-#define t 50000
+#define t 200
 
 /*
 ******************************************** Funciones ********************************************
@@ -134,14 +134,15 @@ void writeCol(int blankData){
 void readRow(){
    
    digitalWrite(inRowShiftLoad,LOW);
-   delayMicroseconds(t);
+   delay(t);
    digitalWrite(inRowShiftLoad,HIGH);
-   delayMicroseconds(t);
+   delay(t);
 
    digitalWrite(inRowClockSignal,HIGH);
    digitalWrite(inRowClockEnable,LOW);
    byte incomingRow = shiftIn(inRowDataSerialInv,inRowClockSignal, LSBFIRST);
    digitalWrite(inRowClockEnable,HIGH);
+   Serial.println("IN-ROW");
    Serial.println(incomingRow, BIN);
 
 }
@@ -150,15 +151,15 @@ void readRow(){
 void readCol(){
   
    digitalWrite(inColShiftLoad,LOW);
-   delayMicroseconds(t);
+   delay(t);
    digitalWrite(inColShiftLoad,HIGH);
-   delayMicroseconds(t);
+   delay(t);
 
    digitalWrite(inColClockSignal,HIGH);
    digitalWrite(inColClockEnable,LOW);
    byte incomingCol = shiftIn(inColDataSerialInv,inColClockSignal, LSBFIRST);
    digitalWrite(inColClockEnable,HIGH);
-   Serial.println(incomingCol, BIN);
+
   
 }
 
@@ -202,7 +203,7 @@ void turnOnFullMatrix(){
 
    writeRow(B11111111);
    writeCol(B00000000);
-   delayMicroseconds(3000);
+   delay(3000);
   
 }
 
@@ -231,20 +232,22 @@ void readState(){
 
 void writeState(){
 
-   for(int i = 7; i< sideSize; i++){
+   for(int i = 0; i< sideSize; i++){
 
       dataRow = bitAssignedRow[i];
       writeRow(dataRow);
+      //readRow();
 
       for(int j = 0; j<sideSize; j++){
 
          dataCol = bitAssignedCol[j];
          writeCol(dataCol);
-         readState();
-         delayMicroseconds(t);
+         //readCol();
+         Serial.println("IN-COL");
+         delay(t);
 
       }
-
+      Serial.println("BYTE JUMP");
       Serial.println("");
    
    }
@@ -285,9 +288,9 @@ void setup(){
 
    //Prueba de tablero
    turnOnFullMatrix();
-   delayMicroseconds(t*10);
+   delay(t);
    turnOffFullMatrix();
-   delayMicroseconds(t*10);
+   delay(t);
   
 }
 
@@ -295,8 +298,6 @@ void setup(){
 void loop(){
 
       writeState();
-      readRow();
-      readCol();
     
 }
 
