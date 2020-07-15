@@ -1,58 +1,55 @@
-/* Programa Demo para leer desde 74HC165
-   Autor: Nick Gammon
-   Fecha: 23 Marzo 2013
+// Demo sketch to read from a 74HC165 input shift register
+// Author: Nick Gammon
+// Date:   23 March 2013
 
-   Conexiones para Uno y similares:
-   Chip pin 1 (SH/LD)  conectado a LATCH (8) queda igual
-   Chip pin 2 (CLK)   conectado a SCK (13) antes en 12
-   Chip pin 9 (QH)   conectado a MISO (12) antes en 11
+// Pin connections for Uno and similar:
 
-   Conexiones para Mega2560:
-   Chip pin 1 (SH/LD)  conectado a LATCH (8)
-   Chip pin 2 (CLK)   conectado a (52)
-   Chip pin 9 (QH)   conectado a (50)
-*/
+// Chip pin 1 (/PL)  goes to LATCH (D9)  (or any other pin by changing LATCH below)
+// Chip pin 2 (CP)   goes to SCK   (D13)
+// Chip pin 9 (Q7)   goes to MISO  (D12)
+
+// Pin connections for Mega2560:
+
+// Chip pin 1 (/PL)  goes to LATCH (D9)  (or any other pin by changing LATCH below)
+// Chip pin 2 (CP)   goes to SCK   (D52)
+// Chip pin 9 (Q7)   goes to MISO  (D50)
+
 
 #include <SPI.h>
 
-const byte LATCH = 8;
+const byte LATCH = 9;
 
-void setup()
+void setup ()
 {
-  SPI.begin();
-  Serial.begin(9600);
-  Serial.println ("Comienza la prueba de entradas");
-  pinMode(LATCH, OUTPUT);
-  digitalWrite(LATCH, HIGH);
-}
+  SPI.begin ();
+  Serial.begin (115200);
+  Serial.println ("Begin switch test.");
+  pinMode (LATCH, OUTPUT);
+  digitalWrite (LATCH, HIGH);
+}  // end of setup
 
-byte bancoEntradas1;
-// agregar declaracion: byte bancoEntradas2;
-// agregar declaracion: byte bancoEntradas3;
-// agregar declaracion: byte bancoEntradas4;
-byte bancoEntradas1Viejo; // estado previo
+byte optionSwitch;
+byte oldOptionSwitch; // previous state
 
-void loop()
+void loop ()
 {
-  digitalWrite (LATCH, LOW);
-  digitalWrite (LATCH, HIGH); // pulso en carga paralela
-  bancoEntradas1 = SPI.transfer(0);
-  //  donde se debe agregar: bancoEntradas2 = SPI.transfer(0);
-  //  donde se debe agregar: bancoEntradas3 = SPI.transfer(0);
-  //  donde se debe agregar: bancoEntradas4 = SPI.transfer(0);
+  digitalWrite (LATCH, LOW);    // pulse the parallel load latch
+  digitalWrite (LATCH, HIGH);
+  optionSwitch = SPI.transfer (0);
   
-  byte mascara = 1;
-  for (int i = 1; i <= 8; i++) {
-    if ((bancoEntradas1 & mascara) != (bancoEntradas1Viejo & mascara))
+  byte mask = 1;
+  for (int i = 1; i <= 8; i++)
+    {
+    if ((optionSwitch & mask) != (oldOptionSwitch & mask))
       {
-      Serial.print ("Llave ");
+      Serial.print ("Switch ");
       Serial.print (i);
-      Serial.print (" ahora ");
-      Serial.println ((bancoEntradas1 & mascara) ? "cerrada" : "abierta");
-      }  // fin de "el bit ha cambiado"
-    mascara <<= 1;  
-    }  // final para cada bit
+      Serial.print (" now ");
+      Serial.println ((optionSwitch & mask) ? "closed" : "open");
+      }  // end of bit has changed
+    mask <<= 1;  
+    }  // end of for each bit
   
-  bancoEntradas1Viejo = bancoEntradas1;
-  delay (1000);
-}
+  oldOptionSwitch = optionSwitch;
+  delay (10);   // debounce
+}  // end of loop
