@@ -19,6 +19,12 @@
 
 const byte LATCH = 9;
 
+const int rowSize = 8;
+
+int state[rowSize] = { 0,0,0,0,0,0,0,0 };
+
+
+
 void setup ()
 {
   SPI.begin ();
@@ -26,30 +32,35 @@ void setup ()
   Serial.println ("Begin switch test.");
   pinMode (LATCH, OUTPUT);
   digitalWrite (LATCH, HIGH);
-}  // end of setup
+}
 
-byte optionSwitch;
-byte oldOptionSwitch; // previous state
+byte switchArray1;
+byte switchArray2; // previous state
 
 void loop ()
 {
   digitalWrite (LATCH, LOW);    // pulse the parallel load latch
   digitalWrite (LATCH, HIGH);
-  optionSwitch = SPI.transfer (0);
   
-  byte mask = 1;
-  for (int i = 1; i <= 8; i++)
-    {
-    if ((optionSwitch & mask) != (oldOptionSwitch & mask))
-      {
-      Serial.print ("Switch ");
-      Serial.print (i);
-      Serial.print (" now ");
-      Serial.println ((optionSwitch & mask) ? "closed" : "open");
-      }  // end of bit has changed
-    mask <<= 1;  
-    }  // end of for each bit
-  
-  oldOptionSwitch = optionSwitch;
-  delay (10);   // debounce
+  SPI.setBitOrder(LSBFIRST);
+  switchArray1 = SPI.transfer(0);
+  switchArray2 = SPI.transfer(0);
+
+  Serial.print(" 1 ");
+  Serial.print(" Decimal ");
+  Serial.print(switchArray1);
+  Serial.print(" Binario: ");
+  Serial.print(switchArray1, BIN);
+  Serial.print(" Hexadecimal : ");
+  Serial.println(switchArray1, HEX);
+
+  Serial.print(" 2 ");
+  Serial.print(" Decimal ");
+  Serial.print(switchArray2);
+  Serial.print(" Binario: ");
+  Serial.print(switchArray2, BIN);
+  Serial.print(" Hexadecimal : ");
+  Serial.println(switchArray2, HEX);
+
+  delay (30);   // debounce
 }  // end of loop
