@@ -1,13 +1,3 @@
-// Demo sketch to read from a 74HC165 input shift register
-// Author: Nick Gammon
-// Date:   23 March 2013
-
-// Pin connections for Uno and similar:
-
-// Chip pin 1 (/PL)  goes to LATCH (D9)  (or any other pin by changing LATCH below)
-// Chip pin 2 (CP)   goes to SCK   (D13)
-// Chip pin 9 (Q7)   goes to MISO  (D12)
-
 // Pin connections for Mega2560:
 
 // Chip pin 1 (/PL)  goes to LATCH (D9)  (or any other pin by changing LATCH below)
@@ -18,12 +8,8 @@
 #include <SPI.h>
 
 const byte LATCH = 9;
-
 const int rowSize = 8;
-
 int state[rowSize] = { 0,0,0,0,0,0,0,0 };
-
-
 
 void setup ()
 {
